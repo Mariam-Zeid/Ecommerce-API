@@ -1,0 +1,23 @@
+{
+  "name": "ecommerce-api",
+  "version": "1.0.0",
+  "description": "A RESTful Ecommerce API built with Node.js, Express, and MongoDB. It supports user authentication, product management, order processing, and payment integration.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "Mariam Zeid",
+  "license": "ISC",
+  "dependencies": {
+    "cloudinary": "^2.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "joi": "^17.13.3",
+    "mongoose": "^8.5.2",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.0.7",
+    "slugify": "^1.6.6"
+  }
+}
