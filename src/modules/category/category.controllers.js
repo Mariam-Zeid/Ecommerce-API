@@ -2,12 +2,13 @@ import { Category } from "../../../db/index.models.js";
 import { messages } from "../../utils/constants/messages.js";
 import { uploadFile } from "../../utils/file-helper.js";
 
-export const addCategory = async (req, res) => {
+const addCategory = async (req, res) => {
   const { name } = req.body;
   // Upload file and get publicId and secureUrl
   const { publicId, secureUrl } = await uploadFile(req.file.path, {
     folder: "Ecommerce/categories",
   });
+
   const newCategory = new Category({
     name,
     image: {
@@ -15,8 +16,10 @@ export const addCategory = async (req, res) => {
       secureUrl,
     },
   });
+
   // save category in db
   const createdCategory = await newCategory.save();
+
   // check if category is not created
   if (!createdCategory) {
     req.failImg = publicId;
@@ -29,7 +32,7 @@ export const addCategory = async (req, res) => {
     data: createdCategory,
   });
 };
-export const updateCategory = async (req, res) => {
+const updateCategory = async (req, res) => {
   const { categorySlug } = req.params;
   const { name } = req.body;
 
@@ -56,3 +59,5 @@ export const updateCategory = async (req, res) => {
     data: updatedCategory,
   });
 };
+
+export const categoryControllers = { addCategory, updateCategory };

@@ -3,7 +3,7 @@ import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
 import { uploadFile } from "../../utils/file-helper.js";
 
-export const addSubCategory = async (req, res) => {
+const addSubCategory = async (req, res) => {
   const { name } = req.body;
   const { categorySlug } = req.params;
 
@@ -33,7 +33,7 @@ export const addSubCategory = async (req, res) => {
     data: createdSubCategory,
   });
 };
-export const updateSubCategory = async (req, res) => {
+const updateSubCategory = async (req, res) => {
   const { subcategorySlug } = req.params;
   const { name } = req.body;
 
@@ -60,3 +60,5 @@ export const updateSubCategory = async (req, res) => {
     data: updatedCategory,
   });
 };
+
+export const subcategoryControllers = { addSubCategory, updateSubCategory };

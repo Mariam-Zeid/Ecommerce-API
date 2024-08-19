@@ -3,7 +3,7 @@ import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
 import { uploadFile } from "../../utils/file-helper.js";
 
-export const addProduct = async (req, res) => {
+const addProduct = async (req, res) => {
   let { name, description, price, discount, colors, sizes, stock, brand } =
     req.body;
 
@@ -71,7 +71,7 @@ export const addProduct = async (req, res) => {
   });
 };
 
-export const updateProduct = async (req, res) => {
+const updateProduct = async (req, res) => {
   const { name, description, price, discount, colors, sizes, stock, brand } =
     req.body;
 
@@ -142,4 +142,9 @@ export const updateProduct = async (req, res) => {
     message: messages("Product").success.update,
     data: updatedProduct,
   });
+};
+
+export const productControllers = {
+  addProduct,
+  updateProduct,
 };

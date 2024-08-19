@@ -3,23 +3,11 @@ import { asyncErrorHandler } from "../../utils/error-handling.js";
 import { cloudUpload } from "../../utils/multer.js";
 import { isValid } from "../../middlewares/validations.js";
 import { checkDocument, updateConflict } from "../../middlewares/existence.js";
-import {
-  addSubCategoryValidation,
-  deleteSubCategoryValidation,
-  getSubCategoryValidation,
-  updatesubCategoryValidation,
-} from "./subcategory.validations.js";
+import { subcategoryValidations } from "./subcategory.validations.js";
 import { Category, Subcategory } from "../../../db/index.models.js";
-import {
-  addSubCategory,
-  updateSubCategory,
-} from "./subcategory.controllers.js";
-import { getCategoryValidation } from "../category/category.validation.js";
-import {
-  deleteDocument,
-  getAllDocuments,
-  getDocument,
-} from "../../utils/RESTful_APIs.js";
+import { subcategoryControllers } from "./subcategory.controllers.js";
+import { categoryValidations } from "../category/category.validation.js";
+import { generalCRUD } from "../../utils/RESTful_APIs.js";
 import productRouter from "../product/product.routes.js";
 
 const subCategoryRouter = Router({ mergeParams: true });
@@ -27,45 +15,45 @@ const subCategoryRouter = Router({ mergeParams: true });
 // get all subcategories
 subCategoryRouter.get(
   "/subcategories",
-  isValid(getCategoryValidation),
+  isValid(categoryValidations.getCategoryValidation),
   checkDocument(Category, "slug", "notFound", "params", "categorySlug"),
-  asyncErrorHandler(getAllDocuments(Subcategory))
+  asyncErrorHandler(generalCRUD.getAllDocuments(Subcategory))
 );
 
 // get subcategory
 subCategoryRouter.get(
   "/:subcategorySlug",
-  isValid(getSubCategoryValidation),
+  isValid(subcategoryValidations.getSubCategoryValidation),
   checkDocument(Subcategory, "slug", "notFound", "params", "subcategorySlug"),
-  asyncErrorHandler(getDocument(Subcategory, "subcategorySlug"))
+  asyncErrorHandler(generalCRUD.getDocument(Subcategory, "subcategorySlug"))
 );
 
 // add subsubcategory
 subCategoryRouter.post(
   "/",
   cloudUpload({}).single("file"),
-  isValid(addSubCategoryValidation),
+  isValid(subcategoryValidations.addSubCategoryValidation),
   checkDocument(Category, "slug", "notFound", "params", "categorySlug"),
   checkDocument(Subcategory, "name", "exists"),
-  asyncErrorHandler(addSubCategory)
+  asyncErrorHandler(subcategoryControllers.addSubCategory)
 );
 
 // update subcategory
 subCategoryRouter.patch(
   "/:subcategorySlug",
   cloudUpload({}).single("file"),
-  isValid(updatesubCategoryValidation),
+  isValid(subcategoryValidations.updatesubCategoryValidation),
   checkDocument(Subcategory, "slug", "notFound", "params", "subcategorySlug"),
   updateConflict(Subcategory, "name", "subcategorySlug"),
-  asyncErrorHandler(updateSubCategory)
+  asyncErrorHandler(subcategoryControllers.updateSubCategory)
 );
 
 // delete subcategory
 subCategoryRouter.delete(
   "/:subcategorySlug",
-  isValid(deleteSubCategoryValidation),
+  isValid(subcategoryValidations.deleteSubCategoryValidation),
   checkDocument(Subcategory, "slug", "notFound", "params", "subcategorySlug"),
-  asyncErrorHandler(deleteDocument(Subcategory, "subcategorySlug"))
+  asyncErrorHandler(generalCRUD.deleteDocument(Subcategory, "subcategorySlug"))
 );
 
 // Passing subcategory slug for sub-routes

@@ -10,7 +10,7 @@ import { AppError } from "./error-handling.js";
 //     data: documents,
 //   });
 // };
-export const getAllDocuments = (model) => async (req, res) => {
+const getAllDocuments = (model) => async (req, res) => {
   let {
     page = 1,
     limit = 5,
@@ -32,7 +32,7 @@ export const getAllDocuments = (model) => async (req, res) => {
     data: documents,
   });
 };
-export const getDocument = (model, slug) => async (req, res) => {
+const getDocument = (model, slug) => async (req, res) => {
   const value = req.params[slug];
   const document = await model.findOne({ slug: value });
   return res.status(200).json({
@@ -41,7 +41,7 @@ export const getDocument = (model, slug) => async (req, res) => {
     data: document,
   });
 };
-export const deleteDocument = (model, slug) => async (req, res) => {
+const deleteDocument = (model, slug) => async (req, res) => {
   const value = req.params[slug];
   const deletedCategory = await model.findOneAndDelete({
     slug: value,
@@ -57,4 +57,10 @@ export const deleteDocument = (model, slug) => async (req, res) => {
     message: messages(model.modelName).success.delete,
     data: deletedCategory,
   });
+};
+
+export const generalCRUD = {
+  getAllDocuments,
+  getDocument,
+  deleteDocument,
 };

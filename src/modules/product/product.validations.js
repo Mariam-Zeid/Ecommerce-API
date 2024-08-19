@@ -1,13 +1,13 @@
 import Joi from "joi";
 import { generalFields } from "../../utils/validation-helper.js";
 
-export const getProductValidation = Joi.object({
+const getProductValidation = Joi.object({
   categorySlug: generalFields.name.required(),
   subcategorySlug: generalFields.name.required(),
   productSlug: generalFields.name.required(),
 });
 
-export const addProductValidation = Joi.object({
+const addProductValidation = Joi.object({
   name: generalFields.name.required(),
   description: Joi.string().max(500).required(),
   files: Joi.object({
@@ -25,7 +25,7 @@ export const addProductValidation = Joi.object({
   brand: generalFields.id.required(),
 }).required();
 
-export const updateProductValidation = Joi.object({
+const updateProductValidation = Joi.object({
   name: generalFields.name,
   description: Joi.string().max(500),
   files: Joi.object({
@@ -44,6 +44,13 @@ export const updateProductValidation = Joi.object({
   productSlug: generalFields.name.required(),
 });
 
-export const deleteProductValidation = Joi.object({
+const deleteProductValidation = Joi.object({
   productSlug: generalFields.name.required(),
 }).required();
+
+export const productValidations = {
+  getProductValidation,
+  addProductValidation,
+  updateProductValidation,
+  deleteProductValidation,
+};

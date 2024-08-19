@@ -3,7 +3,7 @@ import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
 import { uploadFile } from "../../utils/file-helper.js";
 
-export const addBrand = async (req, res) => {
+const addBrand = async (req, res) => {
   const { name } = req.body;
 
   // Upload file and get publicId and secureUrl
@@ -28,7 +28,7 @@ export const addBrand = async (req, res) => {
     data: createdBrand,
   });
 };
-export const updateBrand = async (req, res) => {
+const updateBrand = async (req, res) => {
   const { brandSlug } = req.params;
   const { name } = req.body;
 
@@ -54,3 +54,5 @@ export const updateBrand = async (req, res) => {
     data: updatedBrand,
   });
 };
+
+export const brandControllers = { addBrand, updateBrand };
