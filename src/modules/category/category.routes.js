@@ -8,6 +8,8 @@ import { cloudUpload } from "../../utils/multer.js";
 import { categoryControllers } from "./category.controllers.js";
 import subCategoryRouter from "../subcategory/subcategory.routes.js";
 import { generalCRUD } from "../../utils/RESTful_APIs.js";
+import { authMiddleware } from "../../middlewares/auth.js";
+import { roles } from "../../utils/constants/enums.js";
 
 const categoryRouter = Router();
 
@@ -28,6 +30,8 @@ categoryRouter.get(
 // add category
 categoryRouter.post(
   "/",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(categoryValidations.addCategoryValidation),
   checkDocument(Category, "name", "exists"),
@@ -37,6 +41,8 @@ categoryRouter.post(
 // update category
 categoryRouter.patch(
   "/:categorySlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(categoryValidations.updateCategoryValidation),
   checkDocument(Category, "slug", "notFound", "params", "categorySlug"),
@@ -47,6 +53,8 @@ categoryRouter.patch(
 // delete category
 categoryRouter.delete(
   "/:categorySlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN]),
   isValid(categoryValidations.deleteCategoryValidation),
   checkDocument(Category, "slug", "notFound", "params", "categorySlug"),
   asyncErrorHandler(generalCRUD.deleteDocument(Category, "categorySlug"))

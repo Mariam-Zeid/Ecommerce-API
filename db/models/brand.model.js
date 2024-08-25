@@ -24,7 +24,7 @@ const brandSchema = new Schema(
     },
     createdBy: {
       type: Schema.Types.ObjectId,
-      required: false, // todo true
+      required: true,
       ref: "User",
     },
   },

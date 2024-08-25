@@ -19,13 +19,14 @@ export const asyncErrorHandler = (fn) => {
 
 // Handling Global Errors
 export const globalErrorHandler = async (error, req, res, next) => {
-  if (req.file) {
-    await deleteFile(req.failImg);
-  }
+  // if (req.file) {
+  //   console.log(req.file);
+  //   await deleteFile(req.failImg);
+  // }
 
-  if (req.files) {
-    console.log(req.files);
-  }
+  // if (req.files) {
+  //   console.log(req.files);
+  // }
 
   const { statusCode, message } = error;
   return res

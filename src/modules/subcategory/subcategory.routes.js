@@ -9,6 +9,8 @@ import { subcategoryControllers } from "./subcategory.controllers.js";
 import { categoryValidations } from "../category/category.validation.js";
 import { generalCRUD } from "../../utils/RESTful_APIs.js";
 import productRouter from "../product/product.routes.js";
+import { authMiddleware } from "../../middlewares/auth.js";
+import { roles } from "../../utils/constants/enums.js";
 
 const subCategoryRouter = Router({ mergeParams: true });
 
@@ -31,6 +33,8 @@ subCategoryRouter.get(
 // add subsubcategory
 subCategoryRouter.post(
   "/",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(subcategoryValidations.addSubCategoryValidation),
   checkDocument(Category, "slug", "notFound", "params", "categorySlug"),
@@ -41,6 +45,8 @@ subCategoryRouter.post(
 // update subcategory
 subCategoryRouter.patch(
   "/:subcategorySlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(subcategoryValidations.updatesubCategoryValidation),
   checkDocument(Subcategory, "slug", "notFound", "params", "subcategorySlug"),
@@ -51,6 +57,8 @@ subCategoryRouter.patch(
 // delete subcategory
 subCategoryRouter.delete(
   "/:subcategorySlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   isValid(subcategoryValidations.deleteSubCategoryValidation),
   checkDocument(Subcategory, "slug", "notFound", "params", "subcategorySlug"),
   asyncErrorHandler(generalCRUD.deleteDocument(Subcategory, "subcategorySlug"))

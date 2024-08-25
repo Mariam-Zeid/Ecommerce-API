@@ -7,6 +7,8 @@ import { brandValidations } from "./brand.validations.js";
 import { Brand } from "../../../db/index.models.js";
 import { brandControllers } from "./brand.controllers.js";
 import { generalCRUD } from "../../utils/RESTful_APIs.js";
+import { authMiddleware } from "../../middlewares/auth.js";
+import { roles } from "../../utils/constants/enums.js";
 
 const brandRouter = Router();
 
@@ -24,6 +26,8 @@ brandRouter.get(
 // add brand
 brandRouter.post(
   "/",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(brandValidations.addBrandValidation),
   checkDocument(Brand, "name", "exists"),
@@ -33,6 +37,8 @@ brandRouter.post(
 // update brand
 brandRouter.patch(
   "/:brandSlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).single("file"),
   isValid(brandValidations.updateBrandValidation),
   checkDocument(Brand, "slug", "notFound", "params", "brandSlug"),
@@ -43,6 +49,8 @@ brandRouter.patch(
 // delete brand
 brandRouter.delete(
   "/:brandSlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN]),
   isValid(brandValidations.deleteBrandValidation),
   checkDocument(Brand, "slug", "notFound", "params", "brandSlug"),
   asyncErrorHandler(generalCRUD.deleteDocument(Brand, "brandSlug"))

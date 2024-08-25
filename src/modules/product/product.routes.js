@@ -12,6 +12,9 @@ import { checkDocument, updateConflict } from "../../middlewares/existence.js";
 import { productValidations } from "./product.validations.js";
 import { cloudUpload } from "../../utils/multer.js";
 import { productControllers } from "./product.controllers.js";
+import { authMiddleware } from "../../middlewares/auth.js";
+import { roles } from "../../utils/constants/enums.js";
+import reviewRouter from "../review/review.routes.js";
 
 const productRouter = Router({ mergeParams: true });
 
@@ -32,6 +35,8 @@ productRouter.get(
 // add product
 productRouter.post(
   "/",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).fields([
     { name: "file", maxCount: 1 },
     { name: "files", maxCount: 5 },
@@ -47,6 +52,8 @@ productRouter.post(
 //update product
 productRouter.patch(
   "/:productSlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN, roles.SELLER]),
   cloudUpload({}).fields([
     { name: "file", maxCount: 1 },
     { name: "files", maxCount: 5 },
@@ -60,9 +67,13 @@ productRouter.patch(
 // delete product
 productRouter.delete(
   "/:productSlug",
+  authMiddleware.isAuthenticated,
+  authMiddleware.isAuthorized([roles.ADMIN]),
   isValid(productValidations.deleteProductValidation),
   checkDocument(Product, "slug", "notFound", "params", "productSlug"),
   asyncErrorHandler(generalCRUD.deleteDocument(Product, "productSlug"))
 );
 
+// Passing subcategory slug for sub-routes
+productRouter.use("/:productSlug", reviewRouter);
 export default productRouter;

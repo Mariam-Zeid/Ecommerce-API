@@ -1,5 +1,8 @@
 import { model, Schema } from "mongoose";
 import slugify from "slugify";
+import Review from "./review.model.js";
+import { deleteFile } from "../../src/utils/file-helper.js";
+import { discountTypes } from "../../src/utils/constants/enums.js";
 
 // schema
 const productSchema = new Schema(
@@ -40,26 +43,26 @@ const productSchema = new Schema(
     },
     discount: {
       type: Number,
-      required: true,
-      min: 0,
-      max: 100,
+      default: 0,
+    },
+    discountType: {
+      type: String,
+      enum: Object.values(discountTypes),
+      default: discountTypes.NONE,
     },
     colors: {
       type: [String],
-      // required: true,
     },
     sizes: {
       type: [String],
     },
     stock: {
       type: Number,
-      // required: true,
       default: 1,
       min: 0,
     },
     rate: {
       type: Number,
-      // required: true,
       default: 5,
       min: 0,
       max: 5,
@@ -83,12 +86,12 @@ const productSchema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false, // todo true
+      required: true,
     },
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false, // todo true
+      required: true,
     },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
@@ -97,6 +100,34 @@ const productSchema = new Schema(
 // virtuals
 productSchema.virtual("priceAfterDiscount").get(function () {
   return this.price - (this.price * (this.discount || 0)) / 100;
+});
+
+// Delete all reviews associated with the products
+productSchema.pre("findOneAndDelete", async function (next) {
+  // extract the _id of the subcategory that is being queried for deletion
+  const productSlug = this.getQuery().slug;
+
+  // Find the category to get its image path
+  const product = await this.model.findOne({ slug: productSlug });
+
+  // Delete the product's image if it exists
+  if (product.coverImage && product.coverImage.publicId) {
+    await deleteFile(product.coverImage.publicId);
+  }
+
+  // Delete the product's images if it exists
+  if (product.images && product.images.length > 0) {
+    product.images.forEach(async (image) => {
+      await deleteFile(image.publicId);
+    });
+  }
+
+  // Delete products from the database
+  await Review.deleteMany({
+    product: product._id,
+  });
+
+  next();
 });
 
 // generate slug

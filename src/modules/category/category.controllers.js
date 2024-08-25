@@ -15,6 +15,7 @@ const addCategory = async (req, res) => {
       publicId,
       secureUrl,
     },
+    createdBy: req.user.id,
   });
 
   // save category in db

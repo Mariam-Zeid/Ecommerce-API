@@ -3,7 +3,15 @@ import express from "express";
 import dotenv from "dotenv";
 import { connectToDB } from "./db/connection.js";
 import { globalErrorHandler } from "./src/utils/error-handling.js";
-import { brandRouter, categoryRouter } from "./src/index.routes.js";
+import {
+  authRouter,
+  brandRouter,
+  cartRouter,
+  categoryRouter,
+  couponRouter,
+  orderRouter,
+  wishlistRouter,
+} from "./src/index.routes.js";
 
 // Create express app
 const app = express();
@@ -21,8 +29,13 @@ connectToDB();
 app.use(express.json());
 
 // Define routes
+app.use("/auth", authRouter);
 app.use("/categories", categoryRouter);
 app.use("/brands", brandRouter);
+app.use("/wishlist", wishlistRouter);
+app.use("/cart", cartRouter);
+app.use("/coupons", couponRouter);
+app.use("/orders", orderRouter);
 
 // Global error handler
 app.use(globalErrorHandler);

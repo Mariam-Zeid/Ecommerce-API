@@ -21,6 +21,7 @@ const addSubCategory = async (req, res) => {
       secureUrl,
     },
     category: category._id,
+    createdBy: req.user.id,
   });
   const createdSubCategory = await newSubCategory.save();
   if (!createdSubCategory) {

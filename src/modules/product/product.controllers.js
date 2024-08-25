@@ -1,17 +1,29 @@
 import { Category, Product, Subcategory } from "../../../db/index.models.js";
+import { discountTypes } from "../../utils/constants/enums.js";
 import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
 import { uploadFile } from "../../utils/file-helper.js";
 
 const addProduct = async (req, res) => {
-  let { name, description, price, discount, colors, sizes, stock, brand } =
-    req.body;
+  let {
+    name,
+    description,
+    price,
+    discountType,
+    discount,
+    colors,
+    sizes,
+    stock,
+    brand,
+  } = req.body;
 
   const failImgs = [];
 
   // prepare data
   if (colors) colors = JSON.parse(colors);
   if (sizes) sizes = JSON.parse(sizes);
+  if (discountTypes.PERCENTAGE === discountType && discount > 100)
+    throw new AppError("Discount cannot be greater than 100", 400);
 
   // cover image
   const { publicId: coverImagePublicId, secureUrl: coverImageUrl } =
@@ -48,12 +60,15 @@ const addProduct = async (req, res) => {
     images: req.body.images,
     price,
     discount,
+    discountType,
     colors,
     sizes,
     stock,
     category: category._id,
     subcategory: subcategory._id,
     brand,
+    createdBy: req.user.id,
+    updatedBy: req.user.id,
   });
 
   const createdProduct = await newProduct.save();
@@ -72,8 +87,17 @@ const addProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
-  const { name, description, price, discount, colors, sizes, stock, brand } =
-    req.body;
+  const {
+    name,
+    description,
+    price,
+    discount,
+    discountType,
+    colors,
+    sizes,
+    stock,
+    brand,
+  } = req.body;
 
   const product = await Product.findOne({ slug: req.params.productSlug });
 
@@ -94,6 +118,7 @@ const updateProduct = async (req, res) => {
     description,
     price,
     discount,
+    discountType,
     colors,
     sizes,
     stock,
@@ -129,6 +154,8 @@ const updateProduct = async (req, res) => {
     });
     req.body.images = await Promise.all(imageUploadPromises);
   }
+
+  product.updatedBy = req.user.id;
 
   const updatedProduct = await product.save();
   if (!updatedProduct) {

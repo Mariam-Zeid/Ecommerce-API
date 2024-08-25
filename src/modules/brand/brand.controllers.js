@@ -16,6 +16,7 @@ const addBrand = async (req, res) => {
       publicId,
       secureUrl,
     },
+    createdBy: req.user.id,
   });
   const createdBrand = await newBrand.save();
   if (!createdBrand) {
