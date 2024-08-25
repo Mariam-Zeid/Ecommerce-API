@@ -11,7 +11,7 @@ const addOrder = async (req, res) => {
   const cart = await Cart.findOne({ user: req.user.id })
     .populate("products.product")
     .lean();
-  if (!cart || cart.products.length === 0) {
+  if (!cart) {
     throw new AppError(messages("Cart").failure.notFound, 400);
   }
 
