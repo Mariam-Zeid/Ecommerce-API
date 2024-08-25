@@ -1,6 +1,8 @@
+import Stripe from "stripe";
 import { Cart, Coupon, Order, Product } from "../../../db/index.models.js";
 import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
+import { orderStatuses, paymentMethods } from "../../utils/constants/enums.js";
 
 const addOrder = async (req, res) => {
   const { city, street, phone, paymentMethod, couponCode } = req.body;
@@ -55,19 +57,62 @@ const addOrder = async (req, res) => {
       : null,
   });
 
-  await order.save();
+  const createdOrder = await order.save();
 
-  // Clear the user's cart
-  await Cart.updateOne({ user: req.user.id }, { $set: { products: [] } });
+  if (createdOrder.paymentMethod === paymentMethods.CASH) {
+    // Clear the user's cart
+    await Cart.updateOne({ user: req.user.id }, { $set: { products: [] } });
 
-  // Update product stock using bulkWrite
-  const bulkOps = orderProducts.map((product) => ({
-    updateOne: {
-      filter: { _id: product.product },
-      update: { $inc: { stock: -product.quantity } },
-    },
-  }));
-  await Product.bulkWrite(bulkOps);
+    // Update product stock using bulkWrite
+    const bulkOps = orderProducts.map((product) => ({
+      updateOne: {
+        filter: { _id: product.product },
+        update: { $inc: { stock: -product.quantity } },
+      },
+    }));
+    await Product.bulkWrite(bulkOps);
+
+    // update order status to PROCESSING
+    await Order.updateOne(
+      { _id: createdOrder._id },
+      { $set: { status: orderStatuses.PROCESSING } }
+    );
+  }
+
+  if (createdOrder.paymentMethod === paymentMethods.CARD) {
+    // integrate with stripe
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const checkout = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      metadata: {
+        orderId: createdOrder._id.toString(),
+      },
+      line_items: orderProducts.map((product) => {
+        return {
+          price_data: {
+            currency: "egp",
+            product_data: {
+              name: product.name,
+            },
+            unit_amount: product.discountedPrice * 100, // for decimals
+          },
+          quantity: product.quantity,
+        };
+      }),
+      success_url: `${process.env.CLIENT_SUCCESS_URL}`,
+      cancel_url: `${process.env.CLIENT_CANCELED_URL}`,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: messages("Order").success.create,
+      url: checkout.url,
+      data: {
+        order,
+      },
+    });
+  }
 
   // Send response
   return res.status(200).json({
