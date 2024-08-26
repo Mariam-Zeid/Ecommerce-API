@@ -4,6 +4,7 @@ import {
   orderStatuses,
   paymentMethods,
 } from "../../src/utils/constants/enums.js";
+import Coupon from "./coupon.model.js";
 
 const orderSchema = new Schema(
   {
@@ -68,30 +69,6 @@ const orderSchema = new Schema(
     timestamps: true,
   }
 );
-
-// to calculate totalPrice and priceAfterDiscount
-orderSchema.pre("save", function (next) {
-  const order = this;
-
-  // Calculate totalPrice based on products
-  order.totalPrice = order.products.reduce((acc, product) => {
-    return acc + product.discountedPrice * product.quantity;
-  }, 0);
-
-  // Calculate priceAfterDiscount based on coupon
-  if (order.coupon && order.coupon.discount) {
-    if (order.coupon.discountType === discountTypes.FIXED) {
-      order.priceAfterDiscount = order.totalPrice - order.coupon.discount;
-    } else {
-      order.priceAfterDiscount =
-        order.totalPrice - (order.totalPrice * order.coupon.discount) / 100;
-    }
-  } else {
-    order.priceAfterDiscount = order.totalPrice;
-  }
-
-  next();
-});
 
 const Order = model("Order", orderSchema);
 export default Order;

@@ -2,34 +2,70 @@ import Stripe from "stripe";
 import { Cart, Coupon, Order, Product } from "../../../db/index.models.js";
 import { messages } from "../../utils/constants/messages.js";
 import { AppError } from "../../utils/error-handling.js";
-import { orderStatuses, paymentMethods } from "../../utils/constants/enums.js";
+import {
+  discountTypes,
+  orderStatuses,
+  paymentMethods,
+} from "../../utils/constants/enums.js";
 
 const addOrder = async (req, res) => {
   const { city, street, phone, paymentMethod, couponCode } = req.body;
 
+  const { id: userId } = req.user;
+
   // Check if the user's cart exists
-  const cart = await Cart.findOne({ user: req.user.id })
+  const cart = await Cart.findOne({ user: userId })
     .populate("products.product")
     .lean();
+
   if (!cart) {
     throw new AppError(messages("Cart").failure.notFound, 400);
   }
 
   // Initialize coupon if applicable
   let couponExists = null;
+  let discount = 0;
   if (couponCode) {
     couponExists = await Coupon.findOne({ code: couponCode }).lean();
-    if (!couponExists) {
+    if (!couponExists)
       throw new AppError(messages("Coupon").failure.notFound, 400);
+
+    if (couponExists.expiryDate < Date.now())
+      throw new AppError("Coupon expired", 400);
+
+    let userAssignment = couponExists.assignedTo.find(
+      (assignment) => assignment.userId.toString() === userId
+    );
+
+    if (!userAssignment) {
+      await Coupon.updateOne(
+        { code: couponCode },
+        { $push: { assignedTo: { userId, useCount: 0 } } }
+      );
+      userAssignment = { userId, useCount: 0 };
     }
+
+    if (userAssignment.useCount >= 5) {
+      throw new AppError("Coupon reached max usage for this user", 400);
+    }
+
+    discount = couponExists.discount;
   }
 
   // Prepare order products from cart items
+  let totalPrice = 0;
   const orderProducts = cart.products.map((cartItem) => {
-    const { _id, name, price, priceAfterDiscount } = cartItem.product;
+    const { _id, name, price, priceAfterDiscount, stock } = cartItem.product;
+
+    // Ensure stock is sufficient
+    if (stock < cartItem.quantity) {
+      throw new AppError(`Not enough stock for product: ${name}`, 400);
+    }
 
     // Ensure that discountedPrice is set
     const discountedPrice = priceAfterDiscount || price;
+
+    totalPrice += discountedPrice * cartItem.quantity;
 
     // array of order products
     return {
@@ -41,18 +77,29 @@ const addOrder = async (req, res) => {
     };
   });
 
+  // Calculate priceAfterDiscount based on coupon
+  let priceAfterDiscount = totalPrice;
+  if (couponExists) {
+    if (couponExists.couponType === discountTypes.FIXED) {
+      priceAfterDiscount = totalPrice - discount;
+    } else {
+      priceAfterDiscount = totalPrice - (totalPrice * discount) / 100;
+    }
+  }
+
   // Create a new order
   const order = new Order({
     user: req.user.id,
     address: { city, street, phone },
     products: orderProducts,
+    totalPrice,
+    priceAfterDiscount,
     paymentMethod,
     coupon: couponExists
       ? {
           couponId: couponExists._id,
           code: couponCode,
-          discount: couponExists.discount,
-          discountType: couponExists.discountType, // Ensure that discountType is included in the coupon
+          discount: discount,
         }
       : null,
   });
@@ -77,6 +124,14 @@ const addOrder = async (req, res) => {
       { _id: createdOrder._id },
       { $set: { status: orderStatuses.PROCESSING } }
     );
+
+    if (couponExists) {
+      // increment coupon use count
+      await Coupon.updateOne(
+        { code: couponCode, "assignedTo.userId": userId },
+        { $inc: { "assignedTo.$.useCount": 1 } }
+      );
+    }
   }
 
   if (createdOrder.paymentMethod === paymentMethods.CARD) {

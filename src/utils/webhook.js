@@ -1,8 +1,7 @@
 import Stripe from "stripe";
 import { asyncErrorHandler } from "./error-handling.js";
-import { Cart, Order } from "../../db/index.models.js";
+import { Cart, Coupon, Order } from "../../db/index.models.js";
 import { orderStatuses } from "./constants/enums.js";
-// import { Cart, Order, Product } from "../../db/index.js";
 
 export const webhook = asyncErrorHandler(async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -35,6 +34,19 @@ export const webhook = asyncErrorHandler(async (req, res) => {
       { status: orderStatuses.PROCESSING },
       { new: true }
     );
+
+    // update coupon usage count
+    const couponCode = orderExist.coupon.code;
+    const couponExists = await Coupon.findOne({
+      code: couponCode,
+    });
+    if (couponExists) {
+      // increment coupon use count
+      await Coupon.updateOne(
+        { code: couponCode, "assignedTo.userId": userId },
+        { $inc: { "assignedTo.$.useCount": 1 } }
+      );
+    }
   }
   return res.status(200).json({ status: "success", message: "received" });
 });
