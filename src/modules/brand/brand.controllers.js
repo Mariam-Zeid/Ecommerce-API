@@ -10,6 +10,8 @@ const addBrand = async (req, res) => {
   const { publicId, secureUrl } = await uploadFile(req.file.path, {
     folder: "Ecommerce/brands",
   });
+  req.failImg = publicId;
+
   const newBrand = new Brand({
     name,
     logo: {
@@ -18,11 +20,12 @@ const addBrand = async (req, res) => {
     },
     createdBy: req.user.id,
   });
+
   const createdBrand = await newBrand.save();
   if (!createdBrand) {
-    req.failImg = publicId;
     throw new AppError(messages("Brand").failure.create, 500);
   }
+
   return res.status(201).json({
     status: "success",
     message: messages("Brand").success.create,

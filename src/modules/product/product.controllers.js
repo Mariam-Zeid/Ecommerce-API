@@ -47,6 +47,7 @@ const addProduct = async (req, res) => {
   });
 
   req.body.images = await Promise.all(imageUploadPromises);
+  req.failImgs = failImgs;
 
   const category = await Category.findOne({ slug: req.params.categorySlug });
   const subcategory = await Subcategory.findOne({
@@ -74,7 +75,6 @@ const addProduct = async (req, res) => {
   const createdProduct = await newProduct.save();
 
   if (!createdProduct) {
-    req.failImgs = failImgs;
     throw new AppError(messages("Product").failure.create, 500);
   }
 

@@ -9,6 +9,7 @@ const addCategory = async (req, res) => {
     folder: "Ecommerce/categories",
   });
 
+  req.failImg = publicId;
   const newCategory = new Category({
     name,
     image: {
@@ -23,7 +24,6 @@ const addCategory = async (req, res) => {
 
   // check if category is not created
   if (!createdCategory) {
-    req.failImg = publicId;
     throw new AppError(messages("Category").failure.create, 500);
   }
   // send response
@@ -48,11 +48,8 @@ const updateCategory = async (req, res) => {
     category.image = { publicId, secureUrl };
   }
 
+  req.failImg = category.image.publicId;
   const updatedCategory = await category.save();
-  if (!updatedCategory) {
-    req.failImg = category.image.publicId;
-    throw new AppError(messages("Category").failure.update, 500);
-  }
 
   return res.status(200).json({
     status: "success",

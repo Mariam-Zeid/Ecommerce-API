@@ -1,4 +1,4 @@
-import { deleteFile } from "./file-helper.js";
+import { deleteFile, deleteFiles } from "./file-helper.js";
 
 // Handling Errors
 export class AppError extends Error {
@@ -19,14 +19,13 @@ export const asyncErrorHandler = (fn) => {
 
 // Handling Global Errors
 export const globalErrorHandler = async (error, req, res, next) => {
-  // if (req.file) {
-  //   console.log(req.file);
-  //   await deleteFile(req.failImg);
-  // }
+  if (req.file) {
+    await deleteFile(req.failImg);
+  }
 
-  // if (req.files) {
-  //   console.log(req.files);
-  // }
+  if (req.files) {
+    await deleteFiles(req.failImgs);
+  }
 
   const { statusCode, message } = error;
   return res

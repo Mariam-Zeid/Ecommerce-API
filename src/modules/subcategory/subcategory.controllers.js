@@ -23,9 +23,10 @@ const addSubCategory = async (req, res) => {
     category: category._id,
     createdBy: req.user.id,
   });
+  req.failImg = publicId;
+
   const createdSubCategory = await newSubCategory.save();
   if (!createdSubCategory) {
-    req.failImg = publicId;
     throw new AppError(messages("SubCategory").failure.create, 500);
   }
   return res.status(201).json({
@@ -48,10 +49,10 @@ const updateSubCategory = async (req, res) => {
     });
     subcategory.image = { publicId, secureUrl };
   }
+  req.failImg = subcategory.image.publicId;
 
   const updatedCategory = await subcategory.save();
   if (!updatedCategory) {
-    req.failImg = subcategory.image.publicId;
     throw new AppError(messages("SubCategory").failure.update, 500);
   }
 
